@@ -73,3 +73,10 @@ def test_get_all_entries(req_context):
         assert "My Title" == entry['title']
         assert "My Text" == entry['text']
         assert 'created' in entry
+
+
+def test_empty_listing(db):
+    actual = app.test_client().get('/').data
+    expected = "No entires found"
+    asser expected in actual
+
