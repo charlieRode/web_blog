@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Web Blog</title>
+        <!--[if lt IE 9]>
+        <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+    </head>
+    <body>
+        <header>
+            <nav>
+                <ul>
+                    <li><a href="/">Home</a>></li>
+                </ul>
+            </nav>
+        </header>
+        <main>
+            <h1>My Blog</h1>
+            <section id="content">
+            {% block body %}{% endblock %}
+            </section>
+        </main>
+        <footer>
+            <p>Modeled off the Learning Journal from teh CodeFellows Python Dev Accelerator</p>
+        </footer>
+    </body>
+</html>
