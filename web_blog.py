@@ -4,6 +4,7 @@ from flask import g
 import os
 import psycopg2
 from contextlib import closing
+import datetime
 
 DB_SCHEMA = """
 DROP TABLE IF EXISTS entries;
@@ -15,11 +16,20 @@ CREATE TABLE entries (
     )
 """
 
+DB_ENTRY_RETRIEVAL = """
+SELECT id, title, text, created FROM entries ORDER BY created DESC
+"""
+
+DB_ENTRY_INSERT = """
+INSERT INTO entries (title, text, created) VALUES (%s, %s, %s)
+"""
+
 app = Flask(__name__)
 
 app.config['DATABASE'] = os.environ.get(
     'DATABASE_URL', 'dbname=web_blog user=store'
 )
+
 
 def connect_db():
     """Return a connection to the database"""
@@ -43,12 +53,12 @@ def get_database_connection():
     return db
 
 
-@app.teardown_request #This function will be called after the request/response cycle is completed (even if an exception is raised)
+@app.teardown_request  # This function will be called after the request/response cycle is completed (even if an exception is raised)
 def teardown_request(exception):
     db = getattr(g, 'db', None)
     if db is not None:
         if exception and isinstance(exception, psycopg2.Error):
-            # if an exception of type psycopg2.Error is raised, 
+            # if an exception of type psycopg2.Error is raised,
             # rollback any existing transaction
             db.rollback()
         else:
@@ -56,10 +66,32 @@ def teardown_request(exception):
         db.close()
 
 
+def write_entry(title, text):
+    """writes a title, text and created timestamp to database table entries"""
+    if not (title and text):
+        raise ValueError("A title and text body are both required")
+    conn = get_database_connection()
+    cur = conn.cursor()
+    now = datetime.datetime.utcnow()
+    cur.execute(DB_ENTRY_INSERT, [title, text, now])
+
+
+def get_all_entries():
+    """returns a list of entries as dicts"""
+    conn = get_database_connection()
+    cur = conn.cursor()
+    cur.execute(DB_ENTRY_RETRIEVAL)
+    entries = cur.fetchall()
+    keys = ('id', 'title', 'text', 'created')
+    entries_as_dicts = []
+    for entry in entries:
+        entries_as_dicts.append(dict(zip(keys, entry)))
+    return entries_as_dicts
+
+
 @app.route('/')
 def hello():
     return u'Hello World!'
-
 
 
 if __name__ == '__main__':
