@@ -40,6 +40,25 @@ def req_context(db):
         conn.rollback()
 
 
+@pytest.fixture(scope='function')
+def with_entry(db, request):
+    from web_blog import write_entry
+    expected = (u'Test Title', u'Test Text')
+    with app.test_request_context('/'):
+        write_entry(*expected)
+        get_database_connection().commit()
+
+    def cleanup():
+        with app.test_request_context('/'):
+            conn = get_database_connection()
+            cur = conn.cursor()
+            cur.execute("DELETE FROM entries")
+            conn.commit()
+
+    request.addfinalizer(cleanup)
+    return expected
+
+
 def run_independent_query(query, params=[]):
     conn = get_database_connection()
     cur = conn.cursor()
@@ -77,6 +96,12 @@ def test_get_all_entries(req_context):
 
 def test_empty_listing(db):
     actual = app.test_client().get('/').data
-    expected = "No entires found"
-    asser expected in actual
+    expected = "No entries found"
+    assert expected in actual
 
+
+def test_listing(with_entry):
+    expected = with_entry
+    actual = app.test_client().get('/').data
+    for value in expected:
+        assert value in actual

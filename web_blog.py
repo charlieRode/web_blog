@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from flask import Flask
 from flask import g
+from flask import render_template
 import os
 import psycopg2
 from contextlib import closing
@@ -90,8 +91,9 @@ def get_all_entries():
 
 
 @app.route('/')
-def hello():
-    return u'Hello World!'
+def show_entries():
+    entries = get_all_entries()  # list of dicts
+    return render_template('list_entries.html', entries=entries)
 
 
 if __name__ == '__main__':
