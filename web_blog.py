@@ -2,6 +2,7 @@
 from flask import Flask
 from flask import g
 from flask import render_template
+from flask import abort, request, url_for, redirect
 import os
 import psycopg2
 from contextlib import closing
@@ -94,6 +95,17 @@ def get_all_entries():
 def show_entries():
     entries = get_all_entries()  # list of dicts
     return render_template('list_entries.html', entries=entries)
+
+
+@app.route('/add', methods=['POST'])
+def add_entry():
+    try:
+        title = request.form['title']
+        text = request.form['text']
+        write_entry(title, text)
+    except psycopg2.Error:
+        abort(500)  # Internal Server Error
+    return redirect(url_for('show_entries'))
 
 
 if __name__ == '__main__':
