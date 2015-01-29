@@ -76,6 +76,21 @@ def test_write_entry(req_context):
         assert val in rows[0]
 
 
+def test_delete_entry(req_context):
+    from web_blog import write_entry, delete_entry
+    query = "SELECT * FROM entries"
+    expected = ("My Title", "My Text")
+    write_entry(*expected)
+    rows = run_independent_query(query)
+    assert len(rows) == 1
+    for val in expected:
+        assert val in rows[0]
+    entry_id = rows[0][0]
+    delete_entry(entry_id)
+    rows = run_independent_query(query)
+    assert len(rows) == 0
+
+
 def test_get_all_entries_empty(req_context):
     from web_blog import get_all_entries
     entries = get_all_entries()
@@ -116,3 +131,4 @@ def test_add_entry(db):
     assert "No entries found" not in actual
     for expected in entry_data.values():
         assert expected in actual
+

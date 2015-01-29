@@ -26,6 +26,10 @@ DB_ENTRY_INSERT = """
 INSERT INTO entries (title, text, created) VALUES (%s, %s, %s)
 """
 
+DB_ENTRY_DELETE = """
+DELETE FROM entries WHERE id=(%s)
+"""
+
 app = Flask(__name__)
 
 app.config['DATABASE'] = os.environ.get(
@@ -78,6 +82,13 @@ def write_entry(title, text):
     cur.execute(DB_ENTRY_INSERT, [title, text, now])
 
 
+def delete_entry(entry_id):
+    """delete an entry from the table"""
+    conn = get_database_connection()
+    cur = conn.cursor()
+    cur.execute(DB_ENTRY_DELETE, [entry_id])
+
+
 def get_all_entries():
     """returns a list of entries as dicts"""
     conn = get_database_connection()
@@ -105,6 +116,21 @@ def add_entry():
         write_entry(title, text)
     except psycopg2.Error:
         abort(500)  # Internal Server Error
+    return redirect(url_for('show_entries'))
+
+
+@app.route('/edit', methods=['POST'])
+def edit_entry():
+    pass
+
+
+@app.route('/delete', methods=['POST'])
+def remove_entry():
+    try:
+        entry_id = request.form['id']
+        delete_entry(entry_id)
+    except psycopg2.Error:
+        abort(500)
     return redirect(url_for('show_entries'))
 
 
