@@ -30,6 +30,10 @@ DB_ENTRY_DELETE = """
 DELETE FROM entries WHERE id=(%s)
 """
 
+DB_ENTRY_UPDATE = """
+UPDATE entries SET title=(%s), text=(%s) WHERE id=(%s)
+"""
+
 app = Flask(__name__)
 
 app.config['DATABASE'] = os.environ.get(
@@ -89,6 +93,13 @@ def delete_entry(entry_id):
     cur.execute(DB_ENTRY_DELETE, [entry_id])
 
 
+def update_entry(title, text, entry_id):
+    """update title and text for an entry"""
+    conn = get_database_connection()
+    cur = conn.cursor()
+    cur.execute(DB_ENTRY_UPDATE, [title, text, entry_id])
+
+
 def get_all_entries():
     """returns a list of entries as dicts"""
     conn = get_database_connection()
@@ -118,11 +129,12 @@ def add_entry():
         abort(500)  # Internal Server Error
     return redirect(url_for('show_entries'))
 
-
-@app.route('/edit', methods=['POST'])
-def edit_entry():
-    pass
-
+"""
+#@app.route('/edit', methods=['POST'])
+#def edit_entry():
+#    try:
+#        entry_id = request.form['id']
+"""
 
 @app.route('/delete', methods=['POST'])
 def remove_entry():
