@@ -129,12 +129,31 @@ def add_entry():
         abort(500)  # Internal Server Error
     return redirect(url_for('show_entries'))
 
-"""
-#@app.route('/edit', methods=['POST'])
-#def edit_entry():
-#    try:
-#        entry_id = request.form['id']
-"""
+
+@app.route('/edit', methods=['POST'])
+def edit_entry():
+    try:
+        entry_id = int(request.form['id'])
+    except psycopg2.Error:
+        abort(500)
+
+    entries = get_all_entries()
+    for entry in entries:
+        entry['id'] = int(entry['id'])
+    return render_template('edit_entry.html', this_entry_id=entry_id, entries=entries)
+
+
+@app.route('/save', methods=['POST'])
+def save_edit():
+    try:
+        entry_id = request.form['id']
+        title = request.form['title']
+        text = request.form['text']
+        update_entry(title, text, entry_id)
+    except psycopg2.Error:
+        abort(500)
+    return redirect(url_for('show_entries'))
+
 
 @app.route('/delete', methods=['POST'])
 def remove_entry():
