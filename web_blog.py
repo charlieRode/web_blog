@@ -26,6 +26,14 @@ DB_ENTRY_INSERT = """
 INSERT INTO entries (title, text, created) VALUES (%s, %s, %s)
 """
 
+DB_ENTRY_DELETE = """
+DELETE FROM entries WHERE id=(%s)
+"""
+
+DB_ENTRY_UPDATE = """
+UPDATE entries SET title=(%s), text=(%s) WHERE id=(%s)
+"""
+
 app = Flask(__name__)
 
 app.config['DATABASE'] = os.environ.get(
@@ -78,6 +86,20 @@ def write_entry(title, text):
     cur.execute(DB_ENTRY_INSERT, [title, text, now])
 
 
+def delete_entry(entry_id):
+    """delete an entry from the table"""
+    conn = get_database_connection()
+    cur = conn.cursor()
+    cur.execute(DB_ENTRY_DELETE, [entry_id])
+
+
+def update_entry(title, text, entry_id):
+    """update title and text for an entry"""
+    conn = get_database_connection()
+    cur = conn.cursor()
+    cur.execute(DB_ENTRY_UPDATE, [title, text, entry_id])
+
+
 def get_all_entries():
     """returns a list of entries as dicts"""
     conn = get_database_connection()
@@ -105,6 +127,41 @@ def add_entry():
         write_entry(title, text)
     except psycopg2.Error:
         abort(500)  # Internal Server Error
+    return redirect(url_for('show_entries'))
+
+
+@app.route('/edit', methods=['POST'])
+def edit_entry():
+    try:
+        entry_id = int(request.form['id'])
+    except psycopg2.Error:
+        abort(500)
+
+    entries = get_all_entries()
+    for entry in entries:
+        entry['id'] = int(entry['id'])
+    return render_template('edit_entry.html', this_entry_id=entry_id, entries=entries)
+
+
+@app.route('/save', methods=['POST'])
+def save_edit():
+    try:
+        entry_id = request.form['id']
+        title = request.form['title']
+        text = request.form['text']
+        update_entry(title, text, entry_id)
+    except psycopg2.Error:
+        abort(500)
+    return redirect(url_for('show_entries'))
+
+
+@app.route('/delete', methods=['POST'])
+def remove_entry():
+    try:
+        entry_id = request.form['id']
+        delete_entry(entry_id)
+    except psycopg2.Error:
+        abort(500)
     return redirect(url_for('show_entries'))
 
 

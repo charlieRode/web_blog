@@ -76,6 +76,38 @@ def test_write_entry(req_context):
         assert val in rows[0]
 
 
+def test_update_entry(req_context):
+    from web_blog import write_entry, update_entry
+    entry = ("Title", "Text")
+    write_entry(*entry)
+    row = run_independent_query("SELECT * FROM entries")
+    assert len(row) == 1
+    for val in entry:
+        assert val in row[0]
+    entry_id = row[0][0]
+    new_entry = ("New Title", "New Text", entry_id)
+    update_entry(*new_entry)
+    rows = run_independent_query("SELECT * FROM entries")
+    assert len(rows) == 1
+    for val in new_entry:
+        assert val in rows[0]
+
+
+def test_delete_entry(req_context):
+    from web_blog import write_entry, delete_entry
+    query = "SELECT * FROM entries"
+    expected = ("My Title", "My Text")
+    write_entry(*expected)
+    rows = run_independent_query(query)
+    assert len(rows) == 1
+    for val in expected:
+        assert val in rows[0]
+    entry_id = rows[0][0]
+    delete_entry(entry_id)
+    rows = run_independent_query(query)
+    assert len(rows) == 0
+
+
 def test_get_all_entries_empty(req_context):
     from web_blog import get_all_entries
     entries = get_all_entries()
@@ -116,3 +148,19 @@ def test_add_entry(db):
     assert "No entries found" not in actual
     for expected in entry_data.values():
         assert expected in actual
+
+
+"""
+def test_remove_entry(db):
+    entry_data = {
+        u'title': u'Hello',
+        u'text': u'This Is Post'}
+    actual = app.test_client().post('/add', data=entry_data, follow_redirects=True).data
+
+    assert "No entries found" not in actual
+    for expected in entry_data.values():
+        assert expected in actual
+
+    actual = app.test_client().post('/delete', data=None, follow_redirects=True).data
+    assert "No entries found" in actual
+"""
